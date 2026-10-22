@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>டிபன் கடை பில்</title>
+<meta name="theme-color" content="#1f5c3a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+  :root {
+    --leaf: #1f5c3a;
+    --leaf-dark: #143f28;
+    --turmeric: #f2b705;
+    --paper: #fbf8f0;
+    --ink: #1d1d1b;
+    --line: #d8d1bd;
+    --red: #b3261e;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans Tamil", "Latha", "Nirmala UI", system-ui, sans-serif;
+    font-size: 18px;
+    background: var(--paper);
+    color: var(--ink);
+    padding-bottom: 230px;
+  }
+  header {
+    background: var(--leaf);
+    color: var(--white);
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    font-size: 26px;
+    font-weight: 800;
+  }
+  nav { display: flex; background: var(--leaf-dark); }
+  nav button {
+    flex: 1; padding: 16px 8px; border: 0; background: transparent;
+    color: #cfe3d6; font: inherit; font-size: 20px; font-weight: 700;
+    border-bottom: 5px solid transparent;
+  }
+  nav button.active { color: var(--white); border-bottom-color: var(--turmeric); }
+  main { padding: 14px; max-width: 700px; margin: 0 auto; }
+  h2 { font-size: 20px; margin: 22px 0 10px; color: var(--leaf-dark); }
+
+  .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .item-btn {
+    background: var(--white); border: 3px solid var(--line); border-radius: 14px;
+    padding: 16px 12px; text-align: left; font: inherit; color: var(--ink);
+    display: flex; flex-direction: column; gap: 6px; min-height: 100px;
+  }
+  .item-btn:active { background: #fff1b8; border-color: var(--turmeric); }
+  .item-btn .n { font-size: 22px; font-weight: 800; }
+  .item-btn .p { font-size: 20px; color: var(--leaf); font-weight: 700; }
+
+  .bill-row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+    background: var(--white); border: 2px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .bill-row .name { font-size: 21px; font-weight: 800; }
+  .bill-row .sub { font-size: 16px; color: #5d584c; margin-top: 2px; }
+  .qty { display: flex; align-items: center; gap: 10px; }
+  .qty button {
+    width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--leaf);
+    background: var(--white); color: var(--leaf); font-size: 26px; font-weight: 800; line-height: 1;
+  }
+  .qty span { min-width: 28px; text-align: center; font-size: 22px; font-weight: 800; }
+  .line-total { font-size: 21px; font-weight: 800; min-width: 70px; text-align: right; }
+  .empty { color: #5d584c; padding: 10px 2px; font-size: 18px; }
+
+  .total-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--white);
+    border-top: 4px solid var(--turmeric);
+    padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .total-inner { max-width: 700px; margin: 0 auto; }
+  .total-line { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .total-line .label { font-size: 22px; font-weight: 700; }
+  .total-line .amount { font-size: 42px; font-weight: 900; color: var(--leaf-dark); }
+  .actions { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 16px 8px; border-radius: 12px; border: 0; font: inherit;
+    font-size: 18px; font-weight: 800;
+  }
+  .btn.print { flex: 1.6; background: var(--leaf); color: var(--white); }
+  .btn.primary { background: var(--leaf); color: var(--white); }
+  .btn.ghost { background: #efe9d6; color: var(--ink); }
+  .btn.danger { background: #fbe0dc; color: var(--red); }
+
+  .field { display: flex; gap: 10px; margin-bottom: 12px; }
+  .field input, .shop-input {
+    flex: 1; min-width: 0; padding: 14px; font: inherit; font-size: 19px;
+    border: 3px solid var(--line); border-radius: 12px; background: var(--white);
+  }
+  .shop-input { width: 100%; margin-bottom: 4px; }
+  .field input.price { flex: 0 0 110px; }
+  input:focus { outline: 3px solid var(--turmeric); border-color: var(--leaf); }
+  .menu-row {
+    display: grid; grid-template-columns: 1fr 100px auto; gap: 8px; align-items: center;
+    background: var(--white); border: 2px solid var(--line); border-radius: 12px;
+    padding: 10px; margin-bottom: 10px;
+  }
+  .menu-row input {
+    width: 100%; padding: 10px; font: inherit; font-size: 18px;
+    border: 2px solid var(--line); border-radius: 8px;
+  }
+  .menu-row .del {
+    border: 0; background: #fbe0dc; color: var(--red); border-radius: 8px;
+    padding: 12px; font: inherit; font-size: 16px; font-weight: 800;
+  }
+  button:focus-visible { outline: 3px solid var(--turmeric); outline-offset: 2px; }
+  .hidden { display: none !important; }
+  .toast {
+    position: fixed; left: 50%; top: 90px; transform: translateX(-50%);
+    background: var(--ink); color: var(--white); padding: 12px 20px; border-radius: 24px;
+    font-size: 17px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+
+  /* அச்சிடும் ரசீது */
+  #receipt { display: none; }
+
+  @page { margin: 4mm; }
+  @media print {
+    body { background: #fff; padding: 0; font-size: 14px; }
+    header, nav, main, .total-bar, .toast { display: none !important; }
+    #receipt { display: block; color: #000; max-width: 80mm; margin: 0 auto; }
+    #receipt .shop { text-align: center; font-size: 20px; font-weight: 800; }
+    #receipt .when { text-align: center; font-size: 12px; margin: 2px 0 8px; }
+    #receipt .rule { border-top: 1px dashed #000; margin: 6px 0; }
+    #receipt .r { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+    #receipt .r .l { flex: 1; }
+    #receipt .grand { font-size: 20px; font-weight: 800; }
+    #receipt .thanks { text-align: center; margin-top: 10px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<header id="appTitle">🍛 டிபன் கடை பில்</header>
+<nav>
+  <button id="tabBill" class="active">பில் போடு</button>
+  <button id="tabMenu">மெனு மாற்று</button>
+</nav>
+
+<!-- பில் பக்கம் -->
+<main id="billPage">
+  <h2>உணவைத் தொட்டால் பில்லில் சேரும்</h2>
+  <div class="menu-grid" id="menuGrid"></div>
+
+  <h2>இந்த பில்</h2>
+  <div id="billList"></div>
+</main>
+
+<!-- மெனு பக்கம் -->
+<main id="menuPage" class="hidden">
+  <h2>கடையின் பெயர் (பில்லில் வரும்)</h2>
+  <input id="shopName" class="shop-input" type="text" placeholder="கடையின் பெயர்" autocomplete="off">
+
+  <h2>புதிய உணவு சேர்</h2>
+  <div class="field">
+    <input id="newName" type="text" placeholder="உணவின் பெயர்" autocomplete="off">
+    <input id="newPrice" class="price" type="number" inputmode="decimal" min="0" placeholder="விலை ₹">
+  </div>
+  <button class="btn primary" id="addItem" style="width:100%">சேர்</button>
+
+  <h2>உள்ள உணவுகள் (பெயர், விலையை மாற்றலாம்)</h2>
+  <div id="menuEdit"></div>
+  <button class="btn ghost" id="resetMenu" style="width:100%;margin-top:8px">ஆரம்ப மெனுவுக்கு மாற்று</button>
+</main>
+
+<!-- கூடுதல் -->
+<div class="total-bar" id="totalBar">
+  <div class="total-inner">
+    <div class="total-line">
+      <span class="label">கூடுதல்</span>
+      <span class="amount" id="grandTotal">₹0</span>
+    </div>
+    <div class="actions">
+      <button class="btn danger" id="clearBill">புதிய பில்</button>
+      <button class="btn ghost" id="copyBill">நகலெடு</button>
+      <button class="btn print" id="printBill">🖨️ பில் அச்சிடு</button>
+    </div>
+  </div>
+</div>
+
+<!-- அச்சுக்கான ரசீது (திரையில் தெரியாது) -->
+<div id="receipt"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var DEFAULT_MENU = [
+    { name: "இட்லி", price: 10 },
+    { name: "தோசை", price: 30 },
+    { name: "பொங்கல்", price: 40 },
+    { name: "வடை", price: 10 },
+    { name: "பூரி", price: 40 },
+    { name: "பரோட்டா", price: 15 },
+    { name: "சப்பாத்தி", price: 15 },
+    { name: "உப்புமா", price: 30 },
+    { name: "டீ", price: 10 },
+    { name: "காபி", price: 15 }
+  ];
+
+  var menu = load("tiffin_menu", DEFAULT_MENU);
+  var shop = loadText("tiffin_shop", "டிபன் கடை");
+  var bill = {}; // index -> qty
+
+  function load(key, fallback) {
+    try {
+      var v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : JSON.parse(JSON.stringify(fallback));
+    } catch (e) {
+      return JSON.parse(JSON.stringify(fallback));
+    }
+  }
+  function loadText(key, fallback) {
+    try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; }
+  }
+  function saveMenu() {
+    try { localStorage.setItem("tiffin_menu", JSON.stringify(menu)); } catch (e) {}
+  }
+  function saveShop() {
+    try { localStorage.setItem("tiffin_shop", shop); } catch (e) {}
+  }
+  function $(id) { return document.getElementById(id); }
+  function rupees(n) { return "₹" + (Math.round(n * 100) / 100); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+  function billLines() {
+    var out = [], total = 0;
+    Object.keys(bill).forEach(function (k) {
+      var it = menu[Number(k)], q = bill[k];
+      if (!it || !q) return;
+      out.push({ name: it.name, price: it.price, qty: q, line: it.price * q });
+      total += it.price * q;
+    });
+    return { lines: out, total: total };
+  }
+
+  /* ---------- பில் பக்கம் ---------- */
+  function renderTitle() {
+    $("appTitle").textContent = "🍛 " + shop;
+    document.title = shop + " பில்";
+  }
+
+  function renderGrid() {
+    var g = $("menuGrid");
+    g.textContent = "";
+    if (!menu.length) {
+      g.appendChild(el("div", "empty", "மெனுவில் உணவு இல்லை. 'மெனு மாற்று' பக்கத்தில் சேர்க்கவும்."));
+      return;
+    }
+    menu.forEach(function (it, i) {
+      var b = el("button", "item-btn");
+      b.appendChild(el("span", "n", it.name));
+      b.appendChild(el("span", "p", rupees(it.price)));
+      b.addEventListener("click", function () {
+        bill[i] = (bill[i] || 0) + 1;
+        renderBill();
+      });
+      g.appendChild(b);
+    });
+  }
+
+  function renderBill() {
+    var list = $("billList");
+    list.textContent = "";
+    var total = 0, any = false;
+    Object.keys(bill).forEach(function (k) {
+      var i = Number(k), q = bill[k], it = menu[i];
+      if (!it || !q) return;
+      any = true;
+      var line = it.price * q;
+      total += line;
+
+      var row = el("div", "bill-row");
+      var left = el("div");
+      left.appendChild(el("div", "name", it.name));
+      left.appendChild(el("div", "sub", rupees(it.price) + " × " + q));
+      row.appendChild(left);
+
+      var qty = el("div", "qty");
+      var minus = el("button", "", "−");
+      minus.setAttribute("aria-label", "குறை");
+      minus.addEventListener("click", function () {
+        bill[i] = q - 1;
+        if (bill[i] <= 0) delete bill[i];
+        renderBill();
+      });
+      var plus = el("button", "", "+");
+      plus.setAttribute("aria-label", "கூட்டு");
+      plus.addEventListener("click", function () { bill[i] = q + 1; renderBill(); });
+      qty.appendChild(minus);
+      qty.appendChild(el("span", "", String(q)));
+      qty.appendChild(plus);
+      row.appendChild(qty);
+
+      row.appendChild(el("div", "line-total", rupees(line)));
+      list.appendChild(row);
+    });
+    if (!any) list.appendChild(el("div", "empty", "இன்னும் எதுவும் சேர்க்கவில்லை."));
+    $("grandTotal").textContent = rupees(total);
+  }
+
+  $("clearBill").addEventListener("click", function () {
+    if (Object.keys(bill).length && !confirm("இந்த பில்லை அழித்து புதிதாக தொடங்கவா?")) return;
+    bill = {};
+    renderBill();
+  });
+
+  $("copyBill").addEventListener("click", function () {
+    var b = billLines();
+    if (!b.lines.length) { toast("பில்லில் எதுவும் இல்லை"); return; }
+    var text = shop + "\n" + b.lines.map(function (l) {
+      return l.name + " " + l.qty + " × " + l.price + " = " + l.line;
+    }).join("\n") + "\nகூடுதல்: ₹" + b.total;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { toast("நகலெடுக்கப்பட்டது"); },
+        function () { toast("நகலெடுக்க முடியவில்லை"); }
+      );
+    } else {
+      toast("நகலெடுக்க முடியவில்லை");
+    }
+  });
+
+  /* ---------- அச்சிடு ---------- */
+  function fmtDate(d) {
+    function p(n) { return n < 10 ? "0" + n : "" + n; }
+    var h = d.getHours(), ap = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear() + "  " + p(h) + ":" + p(d.getMinutes()) + " " + ap;
+  }
+
+  $("printBill").addEventListener("click", function () {
+    var b = billLines();
+    if (!b.lines.length) { toast("பில்லில் எதுவும் இல்லை"); return; }
+    var r = $("receipt");
+    r.textContent = "";
+    r.appendChild(el("div", "shop", shop));
+    r.appendChild(el("div", "when", fmtDate(new Date())));
+    r.appendChild(el("div", "rule"));
+    b.lines.forEach(function (l) {
+      var row = el("div", "r");
+      row.appendChild(el("span", "l", l.name + "  " + l.qty + " × " + l.price));
+      row.appendChild(el("span", "", String(l.line)));
+      r.appendChild(row);
+    });
+    r.appendChild(el("div", "rule"));
+    var g = el("div", "r grand");
+    g.appendChild(el("span", "l", "கூடுதல்"));
+    g.appendChild(el("span", "", "₹" + b.total));
+    r.appendChild(g);
+    r.appendChild(el("div", "rule"));
+    r.appendChild(el("div", "thanks", "நன்றி! மீண்டும் வருக!"));
+    window.print();
+  });
+
+  /* ---------- மெனு பக்கம் ---------- */
+  function renderMenuEdit() {
+    var box = $("menuEdit");
+    box.textContent = "";
+    menu.forEach(function (it, i) {
+      var row = el("div", "menu-row");
+      var n = document.createElement("input");
+      n.type = "text"; n.value = it.name;
+      n.addEventListener("change", function () {
+        var v = n.value.trim();
+        if (!v) { n.value = it.name; return; }
+        it.name = v; saveMenu(); renderGrid(); renderBill();
+      });
+      var p = document.createElement("input");
+      p.type = "number"; p.inputMode = "decimal"; p.min = "0"; p.value = it.price;
+      p.addEventListener("change", function () {
+        var v = parseFloat(p.value);
+        if (isNaN(v) || v < 0) { p.value = it.price; return; }
+        it.price = v; saveMenu(); renderGrid(); renderBill();
+      });
+      var d = el("button", "del", "நீக்கு");
+      d.addEventListener("click", function () {
+        if (!confirm(it.name + " ஐ நீக்கவா?")) return;
+        menu.splice(i, 1);
+        bill = {}; // குறியீடுகள் மாறுவதால் பில் அழிகிறது
+        saveMenu(); renderMenuEdit(); renderGrid(); renderBill();
+      });
+      row.appendChild(n); row.appendChild(p); row.appendChild(d);
+      box.appendChild(row);
+    });
+  }
+
+  $("shopName").value = shop;
+  $("shopName").addEventListener("change", function () {
+    var v = $("shopName").value.trim();
+    shop = v || "டிபன் கடை";
+    $("shopName").value = shop;
+    saveShop(); renderTitle();
+    toast("கடையின் பெயர் சேமிக்கப்பட்டது");
+  });
+
+  $("addItem").addEventListener("click", function () {
+    var name = $("newName").value.trim();
+    var price = parseFloat($("newPrice").value);
+    if (!name) { toast("உணவின் பெயரை எழுதவும்"); return; }
+    if (isNaN(price) || price < 0) { toast("சரியான விலையை எழுதவும்"); return; }
+    menu.push({ name: name, price: price });
+    $("newName").value = ""; $("newPrice").value = "";
+    saveMenu(); renderMenuEdit(); renderGrid();
+    toast(name + " சேர்க்கப்பட்டது");
+  });
+
+  $("resetMenu").addEventListener("click", function () {
+    if (!confirm("மெனுவை ஆரம்ப நிலைக்கு மாற்றவா? உங்கள் மாற்றங்கள் அழியும்.")) return;
+    menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+    bill = {};
+    saveMenu(); renderMenuEdit(); renderGrid(); renderBill();
+  });
+
+  /* ---------- பக்கம் மாற்றம் ---------- */
+  function show(which) {
+    var isBill = which === "bill";
+    $("billPage").classList.toggle("hidden", !isBill);
+    $("menuPage").classList.toggle("hidden", isBill);
+    $("totalBar").classList.toggle("hidden", !isBill);
+    $("tabBill").classList.toggle("active", isBill);
+    $("tabMenu").classList.toggle("active", !isBill);
+  }
+  $("tabBill").addEventListener("click", function () { show("bill"); });
+  $("tabMenu").addEventListener("click", function () { show("menu"); });
+
+  renderTitle(); renderGrid(); renderBill(); renderMenuEdit();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("service-worker.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
